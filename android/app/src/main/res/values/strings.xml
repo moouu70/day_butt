@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Day Butt</string>
+    <string name="widget_name">Day Butt Overview</string>
+    <string name="widget_description">Shows university schedule, calories, expenses, and routines.</string>
+</resources>

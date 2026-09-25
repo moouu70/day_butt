@@ -1,0 +1,81 @@
+import 'package:flutter/material.dart';
+import '../models/app_theme_preset.dart';
+import '../models/background_mode.dart';
+import '../models/glass_settings.dart';
+import '../models/glow_settings.dart';
+import '../models/theme_backgrounds.dart';
+import '../models/theme_colors.dart';
+
+const midnightTheme = AppThemePreset(
+  id: 'midnight',
+  name: 'Midnight',
+  nameAr: 'منتصف الليل',
+  description: 'Deep cosmic night with electric violet, blue-violet, and lavender accents',
+  descriptionAr: 'الأجواء الكونية الأصلية مع البنفسجي الكهربائي والأزرق الهادئ',
+  colors: ThemeColors(
+    background: Color(0xFF08090E),
+    backgroundDeep: Color(0xFF040508),
+    surface: Color(0xFF10121A),
+    surfaceSecondary: Color(0xFF171924),
+    surfaceElevated: Color(0xFF1C1E2C),
+    primary: Color(0xFF7657FF),
+    secondary: Color(0xFF4F6FE8),
+    highlight: Color(0xFFB49CFF),
+    accentCyan: Color(0xFF4F6FE8),
+    accentGlow: Color(0x337657FF),
+    textPrimary: Color(0xFFF5F7FA),
+    textSecondary: Color(0xFF9BA1AE),
+    textMuted: Color(0xFF656B78),
+    success: Color(0xFF38D996),
+    successGlow: Color(0x3338D996),
+    warning: Color(0xFFFFB547),
+    warningGlow: Color(0x33FFB547),
+    danger: Color(0xFFFF5C70),
+    dangerGlow: Color(0x33FF5C70),
+    info: Color(0xFF4F6FE8),
+    infoGlow: Color(0x334F6FE8),
+    border: Color(0x207657FF),
+    borderHighlight: Color(0x407657FF),
+    catFood: Color(0xFFFF5C70),
+    catTransport: Color(0xFF38D996),
+    catUniversity: Color(0xFF4F6FE8),
+    catShopping: Color(0xFF7657FF),
+    catBills: Color(0xFFFFB547),
+    catOther: Color(0xFFB49CFF),
+    caloriesAccent: Color(0xFFFF5C70),
+    expensesAccent: Color(0xFFFFB547),
+    routineAccent: Color(0xFF38D996),
+    todoAccent: Color(0xFF7657FF),
+    notesAccent: Color(0xFFB49CFF),
+    universityAccent: Color(0xFF4F6FE8),
+  ),
+  glass: GlassSettings(
+    opacity: 0.07,
+    blur: 16,
+    borderOpacity: 0.12,
+    cornerRadius: 20,
+    shadowOpacity: 0.22,
+  ),
+  glow: GlowSettings(
+    enabled: true,
+    intensity: 0.25,
+    radius: 14.0,
+  ),
+  backgrounds: ThemeBackgrounds(
+    home: 'assets/themes/mid_night/home_top.webp',
+    university: 'assets/themes/mid_night/uni.webp',
+    calories: 'assets/themes/mid_night/calories.webp',
+    expenses: 'assets/themes/mid_night/expenses.webp',
+    routine: 'assets/themes/mid_night/routine.webp',
+    notes: 'assets/themes/mid_night/notes.webp',
+    settings: 'assets/themes/mid_night/home_bottom.webp',
+  ),
+  defaultBackgroundMode: BackgroundMode.imageWithOverlay,
+  showBackgroundImage: true,
+  defaultOverlayOpacity: 0.78,
+  previewGradient: LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF0F1018), Color(0xFF1B1435), Color(0xFF08090E)],
+  ),
+);

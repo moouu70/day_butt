@@ -1,0 +1,81 @@
+import 'package:flutter/material.dart';
+import '../models/app_theme_preset.dart';
+import '../models/background_mode.dart';
+import '../models/glass_settings.dart';
+import '../models/glow_settings.dart';
+import '../models/theme_backgrounds.dart';
+import '../models/theme_colors.dart';
+
+const sakuraNightTheme = AppThemePreset(
+  id: 'sakura_night',
+  name: 'Sakura Night',
+  nameAr: 'ليالي الساكورا',
+  description: 'Tokyo dusk with soft sakura pink, violet-pink, and warm lavender',
+  descriptionAr: 'أجواء طوكيو المسائية مع لمسات زهر الكرز والبنفسجي الهادئ',
+  colors: ThemeColors(
+    background: Color(0xFF0E0A14),
+    backgroundDeep: Color(0xFF07050A),
+    surface: Color(0xFF161120),
+    surfaceSecondary: Color(0xFF1F172C),
+    surfaceElevated: Color(0xFF261D36),
+    primary: Color(0xFFF05B9D),
+    secondary: Color(0xFFA85DCE),
+    highlight: Color(0xFFE9A1E8),
+    accentCyan: Color(0xFFE9A1E8),
+    accentGlow: Color(0x33F05B9D),
+    textPrimary: Color(0xFFFDF2F8),
+    textSecondary: Color(0xFFA89BB5),
+    textMuted: Color(0xFF6B5C78),
+    success: Color(0xFF34D399),
+    successGlow: Color(0x3334D399),
+    warning: Color(0xFFFBBF24),
+    warningGlow: Color(0x33FBBF24),
+    danger: Color(0xFFFB7185),
+    dangerGlow: Color(0x33FB7185),
+    info: Color(0xFFA85DCE),
+    infoGlow: Color(0x33A85DCE),
+    border: Color(0x22F05B9D),
+    borderHighlight: Color(0x40F05B9D),
+    catFood: Color(0xFFFB7185),
+    catTransport: Color(0xFF34D399),
+    catUniversity: Color(0xFFA85DCE),
+    catShopping: Color(0xFFF05B9D),
+    catBills: Color(0xFFFBBF24),
+    catOther: Color(0xFFE9A1E8),
+    caloriesAccent: Color(0xFFF05B9D),
+    expensesAccent: Color(0xFFFBBF24),
+    routineAccent: Color(0xFF34D399),
+    todoAccent: Color(0xFFA85DCE),
+    notesAccent: Color(0xFFE9A1E8),
+    universityAccent: Color(0xFFA85DCE),
+  ),
+  glass: GlassSettings(
+    opacity: 0.08,
+    blur: 16,
+    borderOpacity: 0.14,
+    cornerRadius: 20,
+    shadowOpacity: 0.22,
+  ),
+  glow: GlowSettings(
+    enabled: true,
+    intensity: 0.28,
+    radius: 15.0,
+  ),
+  backgrounds: ThemeBackgrounds(
+    home: 'assets/themes/sakura_night/home_top.webp',
+    university: 'assets/themes/sakura_night/uni.webp',
+    calories: 'assets/themes/sakura_night/calories.webp',
+    expenses: 'assets/themes/sakura_night/expenses.webp',
+    routine: 'assets/themes/sakura_night/routine.webp',
+    notes: 'assets/themes/sakura_night/notes.webp',
+    settings: 'assets/themes/sakura_night/home_bottom.webp',
+  ),
+  defaultBackgroundMode: BackgroundMode.imageWithOverlay,
+  showBackgroundImage: true,
+  defaultOverlayOpacity: 0.82,
+  previewGradient: LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF1F122B), Color(0xFF2C1333), Color(0xFF0E0A14)],
+  ),
+);
