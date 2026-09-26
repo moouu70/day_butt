@@ -73,7 +73,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       _manualTime = DateTime.now();
     });
     ref.invalidate(timeTickerProvider);
-    ref.read(obsidianSyncProvider.notifier).syncToday();
+    final imported = await ref.read(obsidianSyncProvider.notifier).checkTodayFile();
+    if (!imported) {
+      ref.read(obsidianSyncProvider.notifier).syncToday();
+    }
     VibrationService.vibrateTick();
     await Future.delayed(const Duration(milliseconds: 250));
   }
