@@ -11,6 +11,9 @@ class SectionHeader extends ConsumerWidget {
   final VoidCallback? onActionTap;
   final Widget? trailing;
   final Color? accentColor;
+  final IconData? secondaryActionIcon;
+  final String? secondaryActionTooltip;
+  final VoidCallback? onSecondaryActionTap;
 
   const SectionHeader({
     super.key,
@@ -19,6 +22,9 @@ class SectionHeader extends ConsumerWidget {
     this.onActionTap,
     this.trailing,
     this.accentColor,
+    this.secondaryActionIcon,
+    this.secondaryActionTooltip,
+    this.onSecondaryActionTap,
   });
 
   @override
@@ -44,48 +50,82 @@ class SectionHeader extends ConsumerWidget {
           if (trailing != null)
             trailing!
           else if (actionLabel != null && onActionTap != null)
-            GestureDetector(
-              onTap: () {
-                VibrationService.vibrateTick();
-                onActionTap!();
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: primary.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: primary.withOpacity(0.28),
-                    width: 1,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (secondaryActionIcon != null && onSecondaryActionTap != null) ...[
+                  Tooltip(
+                    message: secondaryActionTooltip ?? '',
+                    child: GestureDetector(
+                      onTap: () {
+                        VibrationService.vibrateTick();
+                        onSecondaryActionTap!();
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: primary.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: primary.withOpacity(0.24),
+                            width: 1,
+                          ),
+                        ),
+                        child: Icon(
+                          secondaryActionIcon,
+                          size: 13,
+                          color: secondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                GestureDetector(
+                  onTap: () {
+                    VibrationService.vibrateTick();
+                    onActionTap!();
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: primary.withOpacity(0.28),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (actionLabel!.contains('+')) ...[
+                          Icon(LucideIcons.plus, size: 12, color: secondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            actionLabel!.replaceAll('+', '').trim(),
+                            style: TextStyle(
+                              color: secondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ] else
+                          Text(
+                            actionLabel!,
+                            style: TextStyle(
+                              color: secondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (actionLabel!.contains('+')) ...[
-                      Icon(LucideIcons.plus, size: 12, color: secondary),
-                      const SizedBox(width: 4),
-                      Text(
-                        actionLabel!.replaceAll('+', '').trim(),
-                        style: TextStyle(
-                          color: secondary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ] else
-                      Text(
-                        actionLabel!,
-                        style: TextStyle(
-                          color: secondary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+              ],
             ),
         ],
       ),

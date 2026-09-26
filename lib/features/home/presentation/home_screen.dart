@@ -20,11 +20,13 @@ import '../../../database/database_provider.dart';
 import '../../../services/ticker_provider.dart';
 import '../../../services/timetable_service.dart';
 import '../../../services/widget_sync_service.dart';
+import '../../../services/obsidian_service.dart';
 import '../../notes/presentation/add_note_sheet.dart';
 import '../../todos/presentation/add_todo_sheet.dart';
 import '../../university/data/timetable_parser.dart';
 import 'widgets/home_metrics_row.dart';
 import 'widgets/live_class_card.dart';
+import 'widgets/obsidian_preview_dialog.dart';
 import 'widgets/quick_actions_bar.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -48,6 +50,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(obsidianSyncProvider.notifier).syncToday();
+    });
   }
 
   @override
@@ -68,6 +73,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       _manualTime = DateTime.now();
     });
     ref.invalidate(timeTickerProvider);
+    ref.read(obsidianSyncProvider.notifier).syncToday();
     VibrationService.vibrateTick();
     await Future.delayed(const Duration(milliseconds: 250));
   }
@@ -80,16 +86,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         completedAt: drift.Value(!todo.completed ? DateTime.now() : null),
       ),
     );
+    ref.read(obsidianSyncProvider.notifier).syncToday();
   }
 
   Future<void> _deleteTodo(String id) async {
     final db = ref.read(databaseProvider);
     await (db.delete(db.todos)..where((t) => t.id.equals(id))).go();
+    ref.read(obsidianSyncProvider.notifier).syncToday();
   }
 
   Future<void> _deleteNote(String id) async {
     final db = ref.read(databaseProvider);
     await (db.delete(db.notes)..where((t) => t.id.equals(id))).go();
+    ref.read(obsidianSyncProvider.notifier).syncToday();
   }
 
   @override
@@ -281,6 +290,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                 title: loc.tr('todaysTasks'),
                 actionLabel: loc.tr('add'),
                 onActionTap: () => AddTodoSheet.show(context),
+                secondaryActionIcon: LucideIcons.fileText,
+                secondaryActionTooltip: 'Obsidian Daily Note',
+                onSecondaryActionTap: () => ObsidianPreviewDialog.show(context),
               ),
               if (todos.isEmpty)
                 GestureDetector(
@@ -404,13 +416,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              todo.title,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                decoration: todo.completed ? TextDecoration.lineThrough : null,
-                                color: todo.completed ? colors.textMuted : colors.textPrimary,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                VibrationService.vibrateTick();
+                                AddTodoSheet.show(context, todo: todo);
+                              },
+                              child: Text(
+                                todo.title,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: todo.completed ? TextDecoration.lineThrough : null,
+                                  color: todo.completed ? colors.textMuted : colors.textPrimary,
+                                ),
                               ),
                             ),
                           ),
@@ -473,6 +492,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                 title: loc.tr('quickNote'),
                 actionLabel: loc.tr('add'),
                 onActionTap: () => AddNoteSheet.show(context),
+                secondaryActionIcon: LucideIcons.fileText,
+                secondaryActionTooltip: 'Obsidian Daily Note',
+                onSecondaryActionTap: () => ObsidianPreviewDialog.show(context),
               ),
               if (notes.isEmpty)
                 GestureDetector(
@@ -562,74 +584,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                           itemCount: displayedNotes.length,
                           itemBuilder: (context, index) {
                             final note = displayedNotes[index];
-                            return Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                color: colors.surfaceSecondary.withOpacity(0.85),
-                                border: Border.all(
-                                  color: colors.notesAccent.withOpacity(0.26),
-                                  width: 1.2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: colors.notesAccent.withOpacity(0.06),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
+                            return GestureDetector(
+                              onTap: () {
+                                VibrationService.vibrateTick();
+                                AddNoteSheet.show(context, note: note);
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  color: colors.surfaceSecondary.withOpacity(0.85),
+                                  border: Border.all(
+                                    color: colors.notesAccent.withOpacity(0.26),
+                                    width: 1.2,
                                   ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color: colors.notesAccent,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          AppDateUtils.formatTime12Hour(note.createdAt, locale: loc.locale.languageCode),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: AppTypography.metadata.copyWith(
-                                            fontSize: 10,
-                                            color: colors.textMuted,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colors.notesAccent.withOpacity(0.06),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: colors.notesAccent,
+                                            shape: BoxShape.circle,
                                           ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(LucideIcons.trash2, size: 13, color: colors.textMuted),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-                                        onPressed: () {
-                                          VibrationService.vibrateTick();
-                                          _deleteNote(note.id);
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Expanded(
-                                    child: Text(
-                                      note.content,
-                                      maxLines: 4,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTypography.body.copyWith(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.35,
-                                        color: colors.textPrimary,
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            AppDateUtils.formatTime12Hour(note.createdAt, locale: loc.locale.languageCode),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTypography.metadata.copyWith(
+                                              fontSize: 10,
+                                              color: colors.textMuted,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(LucideIcons.trash2, size: 13, color: colors.textMuted),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+                                          onPressed: () {
+                                            VibrationService.vibrateTick();
+                                            _deleteNote(note.id);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Expanded(
+                                      child: Text(
+                                        note.content,
+                                        maxLines: 4,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.body.copyWith(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          height: 1.35,
+                                          color: colors.textPrimary,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },

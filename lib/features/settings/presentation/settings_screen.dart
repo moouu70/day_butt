@@ -22,6 +22,8 @@ import '../../../core/widgets/glass_card.dart';
 import '../../../core/widgets/glass_sheet.dart';
 import '../../../database/database_provider.dart';
 import '../../../services/backup_service.dart';
+import '../../../services/obsidian_service.dart';
+import '../../home/presentation/widgets/obsidian_preview_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -258,6 +260,70 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  void _showManualPathDialog(String currentPath) {
+    final controller = TextEditingController(text: currentPath);
+    final loc = AppLocalizations.of(context);
+    final colors = ref.read(effectiveThemeProvider).colors;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colors.border),
+        ),
+        title: Text(loc.tr('enterPathManually'), style: AppTypography.sectionTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc.tr('obsidianFolderDesc'),
+              style: AppTypography.bodyMuted,
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              controller: controller,
+              hintText: loc.tr('obsidianPathHint'),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(loc.tr('cancel'), style: TextStyle(color: colors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final path = controller.text.trim();
+              if (path.isNotEmpty) {
+                final success = await ref.read(obsidianSyncProvider.notifier).setCustomPath(path);
+                if (ctx.mounted) {
+                  Navigator.of(ctx).pop();
+                }
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(success ? loc.tr('folderUpdated') : loc.tr('folderNotWritable')),
+                      backgroundColor: success ? colors.success : colors.danger,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text(loc.tr('save')),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -270,6 +336,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final currentTheme = ref.watch(effectiveThemeProvider);
     final colors = currentTheme.colors;
     final presetName = themeState.preset.getName(isArabic);
+    final obsidianState = ref.watch(obsidianSyncProvider);
 
     return AppBackground(
       slot: BackgroundSlot.settings,
@@ -613,7 +680,235 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             const SizedBox(height: 24),
 
-            // 4. DATA & BACKUP
+            // 4. OBSIDIAN DAILY NOTES
+            Text(loc.tr('obsidianSync'), style: AppTypography.labelUppercase),
+            const SizedBox(height: 10),
+            GlassCard(
+              padding: const EdgeInsets.all(16),
+              borderRadius: 18,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: colors.notesAccent.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: colors.notesAccent.withOpacity(0.35)),
+                        ),
+                        child: Icon(LucideIcons.fileText, size: 22, color: colors.notesAccent),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(loc.tr('obsidianSync'), style: AppTypography.cardTitle),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: obsidianState.isCustomPath
+                                        ? colors.success.withOpacity(0.18)
+                                        : colors.surfaceSecondary,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: obsidianState.isCustomPath
+                                          ? colors.success.withOpacity(0.4)
+                                          : colors.border,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    obsidianState.isCustomPath
+                                        ? loc.tr('customFolderBadge')
+                                        : loc.tr('defaultFolderBadge'),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: obsidianState.isCustomPath
+                                          ? colors.success
+                                          : colors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              loc.tr('obsidianSyncDesc'),
+                              style: AppTypography.metadata.copyWith(fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Directory display
+                  Text(
+                    loc.tr('obsidianFolder'),
+                    style: AppTypography.metadata.copyWith(color: colors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceSecondary,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.folder, size: 16, color: colors.notesAccent),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: SelectableText(
+                            obsidianState.vaultPath,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 11,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Folder control buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GlassButton(
+                          label: loc.tr('changeFolder'),
+                          icon: LucideIcons.folderOpen,
+                          height: 38,
+                          onPressed: () => ref.read(obsidianSyncProvider.notifier).pickFolder(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GlassButton(
+                          label: loc.tr('enterPathManually'),
+                          icon: LucideIcons.pencil,
+                          isPrimary: false,
+                          height: 38,
+                          onPressed: () => _showManualPathDialog(obsidianState.vaultPath),
+                        ),
+                      ),
+                      if (obsidianState.isCustomPath) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(LucideIcons.rotateCcw, size: 16, color: colors.textMuted),
+                          tooltip: loc.tr('resetDefaultFolder'),
+                          onPressed: () => ref.read(obsidianSyncProvider.notifier).resetToDefault(),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+                  Divider(height: 1, color: colors.border),
+                  const SizedBox(height: 12),
+
+                  // Auto-sync toggle
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(loc.tr('autoSyncObsidian'), style: AppTypography.cardTitle.copyWith(fontSize: 14)),
+                            const SizedBox(height: 2),
+                            Text(
+                              loc.tr('autoSyncObsidianDesc'),
+                              style: AppTypography.metadata.copyWith(fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: obsidianState.autoSync,
+                        activeColor: colors.notesAccent,
+                        onChanged: (val) {
+                          ref.read(obsidianSyncProvider.notifier).toggleAutoSync(val);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+                  Divider(height: 1, color: colors.border),
+                  const SizedBox(height: 14),
+
+                  // Action buttons: Sync Today, Preview, Sync All
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GlassButton(
+                          label: loc.tr('syncNow'),
+                          icon: LucideIcons.refreshCw,
+                          height: 40,
+                          onPressed: () async {
+                            final success = await ref.read(obsidianSyncProvider.notifier).syncToday();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(success ? loc.tr('todaySynced') : loc.tr('folderNotWritable')),
+                                  backgroundColor: success ? colors.success : colors.danger,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GlassButton(
+                          label: loc.tr('previewTodayMarkdown'),
+                          icon: LucideIcons.eye,
+                          isPrimary: false,
+                          height: 40,
+                          onPressed: () => ObsidianPreviewDialog.show(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  GlassButton(
+                    label: loc.tr('syncAllHistory'),
+                    icon: LucideIcons.archive,
+                    isPrimary: false,
+                    height: 38,
+                    onPressed: () async {
+                      final count = await ref.read(obsidianSyncProvider.notifier).syncAllDays();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(loc.tr('syncedToObsidian', {'count': '$count'})),
+                            backgroundColor: colors.success,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // 5. DATA & BACKUP
             Text(loc.tr('dataAndBackup'), style: AppTypography.labelUppercase),
             const SizedBox(height: 10),
             GlassCard(
